@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Super Admin Panel</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+
+  #login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+  .login-card { background: #1e293b; border-radius: 16px; padding: 40px 32px; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; color: #f8fafc; }
+  .login-card .subtitle { font-size: 12px; color: #f59e0b; background: #451a03; border: 1px solid #92400e; padding: 4px 10px; border-radius: 20px; display: inline-block; margin-bottom: 24px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 11px; color: #94a3b8; margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input { width: 100%; padding: 11px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 8px; color: #f1f5f9; font-size: 14px; outline: none; transition: border-color 0.2s; }
+  .form-group input:focus { border-color: #3b82f6; }
+
+  .btn { padding: 10px 18px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-full { width: 100%; }
+  .btn-primary { background: #3b82f6; color: #fff; }
+  .btn-primary:hover { background: #2563eb; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-danger { background: #ef4444; color: #fff; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-secondary { background: #334155; color: #e2e8f0; }
+  .btn-secondary:hover { background: #475569; }
+  .btn-ghost { background: transparent; color: #94a3b8; border: 1px solid #334155; }
+  .btn-ghost:hover { background: #1e293b; color: #e2e8f0; }
+  .btn-sm { padding: 7px 13px; font-size: 12px; }
+  .btn-xs { padding: 4px 9px; font-size: 11px; border-radius: 6px; }
+
+  .error-msg { background: #450a0a; border: 1px solid #ef4444; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #fca5a5; margin-top: 12px; }
+  .success-msg { background: #052e16; border: 1px solid #22c55e; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #86efac; margin-top: 12px; }
+
+  #dashboard-page { display: none; }
+  .topbar { background: #1e293b; padding: 13px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; position: sticky; top: 0; z-index: 10; }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .topbar h1 { font-size: 16px; font-weight: 700; color: #f8fafc; }
+  .super-badge { font-size: 10px; background: #451a03; color: #fb923c; border: 1px solid #92400e; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+  .topbar-right { display: flex; gap: 10px; align-items: center; }
+  .user-badge { font-size: 12px; color: #94a3b8; background: #0f172a; padding: 5px 11px; border-radius: 20px; }
+  .logout-btn { background: #334155; color: #e2e8f0; border: none; padding: 7px 13px; border-radius: 8px; font-size: 12px; cursor: pointer; }
+  .logout-btn:hover { background: #475569; }
+
+  .layout { display: flex; min-height: calc(100vh - 50px); }
+
+  .sidebar { width: 230px; flex-shrink: 0; background: #1e293b; border-right: 1px solid #334155; padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; }
+  .sidebar-label { font-size: 10px; color: #475569; text-transform: uppercase; letter-spacing: 0.8px; padding: 4px 8px; font-weight: 600; }
+  .app-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 11px; border-radius: 8px; cursor: pointer; transition: background 0.15s; border: 1px solid transparent; }
+  .app-item:hover { background: #0f172a; }
+  .app-item.active { background: #0f172a; border-color: #3b82f6; }
+  .app-item-name { font-size: 13px; color: #cbd5e1; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+  .app-item.active .app-item-name { color: #f1f5f9; }
+  .app-item-actions { display: flex; gap: 3px; opacity: 0; flex-shrink: 0; }
+  .app-item:hover .app-item-actions { opacity: 1; }
+  .icon-btn { background: none; border: none; cursor: pointer; padding: 3px 4px; border-radius: 4px; font-size: 12px; transition: background 0.15s; }
+  .icon-btn:hover { background: #334155; }
+  .icon-btn.del:hover { background: #450a0a; }
+  .add-app-btn { margin-top: auto; padding-top: 10px; border-top: 1px solid #334155; }
+
+  .main { flex: 1; padding: 22px; overflow-y: auto; }
+  .content { max-width: 600px; margin: 0 auto; }
+
+  .section { background: #1e293b; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .section-title { font-size: 14px; font-weight: 600; color: #f1f5f9; margin-bottom: 3px; }
+  .section-sub { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+
+  .config-item { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #0f172a; }
+  .config-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .config-item:first-child { padding-top: 0; }
+  .config-label { font-size: 13px; color: #cbd5e1; font-weight: 500; }
+  .config-key { font-size: 11px; color: #475569; margin-top: 2px; font-family: monospace; }
+
+  .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: #334155; transition: 0.3s; border-radius: 24px; }
+  .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background: #94a3b8; transition: 0.3s; border-radius: 50%; }
+  .toggle input:checked + .slider { background: #3b82f6; }
+  .toggle input:checked + .slider:before { transform: translateX(20px); background: #fff; }
+
+  .master-item { background: #0f172a; border-radius: 10px; padding: 13px 15px; margin-bottom: 14px; }
+  .master-item .config-label { font-size: 14px; color: #f1f5f9; font-weight: 600; }
+
+  .offline-item { background: #1c1917; border: 1px solid #44403c; border-radius: 10px; padding: 13px 15px; margin-bottom: 14px; }
+  .offline-item .config-label { font-size: 13px; color: #f97316; font-weight: 600; }
+  .offline-item .config-key { color: #57534e; }
+
+  .save-bar { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+  .save-bar button { flex: 1; }
+  .saving-indicator { font-size: 12px; color: #94a3b8; display: none; }
+
+  .pw-form .form-group { margin-bottom: 10px; }
+  .pw-form .form-group input { padding: 9px 12px; font-size: 13px; }
+
+  .api-url-box { background: #0f172a; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; color: #38bdf8; word-break: break-all; }
+
+  /* Admin list */
+  .admin-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #0f172a; }
+  .admin-row:last-child { border-bottom: none; }
+  .admin-row:first-child { padding-top: 0; }
+  .admin-name { font-size: 13px; color: #cbd5e1; font-weight: 500; }
+  .admin-date { font-size: 11px; color: #475569; margin-top: 2px; }
+  .admin-actions { display: flex; gap: 6px; }
+  .no-admins { text-align: center; padding: 20px; color: #475569; font-size: 13px; }
+  .add-admin-form { background: #0f172a; border-radius: 10px; padding: 14px; margin-top: 14px; }
+  .add-admin-form .row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-admin-form .row input { flex: 1; padding: 8px 11px; background: #1e293b; border: 1px solid #334155; border-radius: 7px; color: #f1f5f9; font-size: 13px; outline: none; }
+  .add-admin-form .row input:focus { border-color: #3b82f6; }
+
+  /* Messages */
+  .msg-row { display: flex; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid #0f172a; }
+  .msg-row:last-child { border-bottom: none; }
+  .msg-row:first-child { padding-top: 0; }
+  .msg-text { flex: 1; font-size: 13px; color: #cbd5e1; }
+  .msg-edit-input { flex: 1; padding: 6px 10px; background: #0f172a; border: 1px solid #3b82f6; border-radius: 6px; color: #f1f5f9; font-size: 13px; outline: none; }
+  .no-messages { text-align: center; padding: 20px; color: #475569; font-size: 13px; }
+  .add-msg-form { background: #0f172a; border-radius: 10px; padding: 14px; margin-top: 14px; }
+  .add-msg-form .row { display: flex; gap: 8px; margin-top: 10px; }
+  .add-msg-form .row input { flex: 1; padding: 8px 11px; background: #1e293b; border: 1px solid #334155; border-radius: 7px; color: #f1f5f9; font-size: 13px; outline: none; }
+  .add-msg-form .row input:focus { border-color: #3b82f6; }
+
+  /* Modal */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: #1e293b; border-radius: 14px; padding: 26px; width: 100%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .modal h2 { font-size: 15px; font-weight: 700; color: #f8fafc; margin-bottom: 14px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+  .modal-actions button { flex: 1; }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: #475569; }
+  .empty-state p { font-size: 13px; margin-top: 8px; }
+
+  /* Analytics */
+  .stat-cards { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .stat-card { flex: 1; min-width: 100px; background: #0f172a; border-radius: 10px; padding: 14px 16px; }
+  .stat-card .stat-value { font-size: 26px; font-weight: 700; color: #f8fafc; line-height: 1; }
+  .stat-card .stat-label { font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 500; }
+  .stat-card.live-card { border: 1px solid #166534; background: #052e16; }
+  .stat-card.live-card .stat-value { color: #4ade80; }
+  .live-dot { display: inline-block; width: 8px; height: 8px; background: #22c55e; border-radius: 50%; margin-right: 5px; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+
+  .chart-wrap { margin-bottom: 10px; }
+  .chart-bars { display: flex; align-items: flex-end; gap: 3px; height: 60px; }
+  .chart-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .chart-bar { width: 100%; background: #3b82f6; border-radius: 3px 3px 0 0; min-height: 2px; transition: height 0.3s; }
+  .chart-bar-label { font-size: 9px; color: #475569; white-space: nowrap; }
+  .chart-empty { font-size: 12px; color: #475569; text-align: center; padding: 16px 0; }
+
+  .hit-feed { max-height: 260px; overflow-y: auto; }
+  .hit-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid #0f172a; }
+  .hit-row:first-child { padding-top: 0; }
+  .hit-row:last-child { border-bottom: none; }
+  .hit-row.new-hit { animation: flashin 0.6s ease; }
+  @keyframes flashin { from{background:#1e3a5f} to{background:transparent} }
+  .hit-ip { font-size: 12px; color: #38bdf8; font-family: monospace; font-weight: 600; white-space: nowrap; min-width: 100px; }
+  .hit-ua { font-size: 11px; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .hit-time { font-size: 10px; color: #475569; white-space: nowrap; flex-shrink: 0; }
+  .no-hits { text-align: center; padding: 20px; color: #475569; font-size: 13px; }
+
+  .hit-row.is-flagged { background: rgba(239,68,68,0.07); border-left: 3px solid #ef4444; padding-left: 7px; }
+  .hit-ip.flagged-ip { color: #f87171; }
+  .flag-badge { font-size: 9px; background: #450a0a; color: #fca5a5; border: 1px solid #ef4444; border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; }
+  .btn-flag { background: transparent; border: 1px solid #475569; color: #94a3b8; padding: 2px 7px; border-radius: 5px; font-size: 10px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+  .btn-flag:hover { border-color: #ef4444; color: #fca5a5; background: #450a0a; }
+  .btn-unflag { background: #450a0a; border: 1px solid #ef4444; color: #fca5a5; padding: 2px 7px; border-radius: 5px; font-size: 10px; cursor: pointer; transition: all 0.15s; white-space: nowrap; flex-shrink: 0; }
+  .btn-unflag:hover { background: #dc2626; color: #fff; }
+
+  .flagged-section { margin-top: 14px; border-top: 1px solid #1e293b; padding-top: 14px; }
+  .flagged-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #450a0a22; border: 1px solid #7f1d1d44; border-radius: 8px; margin-bottom: 6px; }
+  .flagged-row-ip { font-family: monospace; font-size: 12px; color: #f87171; font-weight: 600; min-width: 110px; }
+  .flagged-row-reason { flex: 1; font-size: 11px; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .flagged-row-time { font-size: 10px; color: #475569; flex-shrink: 0; }
+  .no-flagged { text-align: center; padding: 12px; color: #475569; font-size: 12px; }
+
+  @media (max-width: 640px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #334155; flex-direction: row; flex-wrap: wrap; overflow-x: auto; }
+    .sidebar-label { display: none; }
+    .add-app-btn { margin-top: 0; padding-top: 0; border-top: none; }
+    .app-item-actions { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-page">
+  <div class="login-card">
+    <h1>🔐 Admin Login</h1>
+    <span class="subtitle">⚡ Super Admin</span>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="login-user" value="admin" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">Login</button>
+    <div id="login-err" style="display:none"></div>
+  </div>
+</div>
+
+<div id="dashboard-page">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>📱 Dialog Control</h1>
+      <span class="super-badge">SUPER ADMIN</span>
+    </div>
+    <div class="topbar-right">
+      <span class="user-badge" id="user-badge">admin</span>
+      <button class="logout-btn" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar" id="app-sidebar">
+      <div class="sidebar-label">Apps</div>
+      <div id="app-list"></div>
+      <div class="add-app-btn">
+        <button class="btn btn-secondary btn-sm" style="width:100%" onclick="openAddApp()">+ New App</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="content" id="app-content">
+        <div class="empty-state">
+          <div style="font-size:38px">📱</div>
+          <p>বাম দিক থেকে একটি App সিলেক্ট করুন</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- App Name Modal -->
+<div id="app-modal" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <h2 id="modal-title">New App</h2>
+    <div class="form-group" style="margin-bottom:0">
+      <label>App Name</label>
+      <input type="text" id="modal-app-name" placeholder="যেমন: MyApp, BDTaka ...">
+    </div>
+    <div id="modal-err" style="display:none;margin-top:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-btn" onclick="saveApp()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="pw-modal" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <h2 id="pw-modal-title">Reset Password</h2>
+    <div class="form-group" style="margin-bottom:0">
+      <label>New Password</label>
+      <input type="password" id="pw-modal-input" placeholder="New password (min 4 chars)">
+    </div>
+    <div id="pw-modal-err" style="display:none;margin-top:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closePwModal()">Cancel</button>
+      <button class="btn btn-danger" id="pw-modal-btn" onclick="doResetPassword()">Reset</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = window.location.origin + '/api';
+let TOKEN = localStorage.getItem('admin_token') || '';
+let apps = [], currentAppId = null, configData = [], appAdmins = [], messagesData = [];
+let modalMode = null, renameTargetId = null;
+let pwModalTarget = null;
+let editingMsgId = null;
+let analyticsData = { total: 0, today: 0, hourly: [], recent: [] };
+let analyticsSSE = null;
+let flaggedIps = [];
+
+const FIELD_KEYS = ['show_device_id','show_device_name','show_model','show_android','show_imei','show_last_url','show_ipv4','show_ipv6','show_ipv6_check'];
+
+function api(path, method = 'GET', body = null) {
+  return fetch(BASE + path, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...(TOKEN ? { Authorization: 'Bearer ' + TOKEN } : {}) },
+    ...(body !== null ? { body: JSON.stringify(body) } : {})
+  });
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-err');
+  btn.disabled = true; btn.textContent = 'Logging in...'; errEl.style.display = 'none';
+  try {
+    const r = await api('/admin/login', 'POST', {
+      username: document.getElementById('login-user').value,
+      password: document.getElementById('login-pass').value
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Login failed');
+    TOKEN = data.token;
+    localStorage.setItem('admin_token', TOKEN);
+    localStorage.setItem('admin_user', data.username);
+    showDashboard(data.username);
+  } catch (e) {
+    errEl.className = 'error-msg'; errEl.textContent = e.message; errEl.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Login';
+}
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function doLogout() {
+  TOKEN = ''; localStorage.removeItem('admin_token'); localStorage.removeItem('admin_user'); localStorage.removeItem('last_app_id');
+  document.getElementById('dashboard-page').style.display = 'none';
+  document.getElementById('login-page').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+  apps = []; currentAppId = null; configData = []; appAdmins = []; messagesData = [];
+}
+
+function showDashboard(username) {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('dashboard-page').style.display = 'block';
+  document.getElementById('user-badge').textContent = username || 'admin';
+  loadApps();
+}
+
+// ── Apps ──────────────────────────────────────────────────────────────────────
+async function loadApps() {
+  const r = await api('/admin/apps');
+  if (r.status === 401) { doLogout(); return; }
+  apps = await r.json();
+  renderAppList();
+  const lastId = parseInt(localStorage.getItem('last_app_id'));
+  const target = apps.find(a => a.id === lastId) || apps[0];
+  if (target) selectApp(target.id);
+}
+
+function renderAppList() {
+  document.getElementById('app-list').innerHTML = apps.map(a => `
+    <div class="app-item ${a.id === currentAppId ? 'active' : ''}" onclick="selectApp(${a.id})">
+      <span class="app-item-name" title="${esc(a.name)}">${esc(a.name)}</span>
+      <span class="app-item-actions">
+        <button class="icon-btn" title="Rename" onclick="event.stopPropagation();openRename(${a.id},'${esc(a.name).replace(/'/g,"\\'")}')">✏️</button>
+        <button class="icon-btn del" title="Delete" onclick="event.stopPropagation();deleteApp(${a.id},'${esc(a.name).replace(/'/g,"\\'")}')">🗑️</button>
+      </span>
+    </div>`).join('');
+}
+
+async function selectApp(id) {
+  currentAppId = id; localStorage.setItem('last_app_id', id);
+  flaggedIps = []; ipv6RecordsData = []; deviceRecordsData = [];
+  renderAppList();
+  await Promise.all([loadConfig(), loadAdmins(), loadMessages()]);
+  renderAppContent();
+  applyTrackingToggles();
+  loadAnalytics();
+  loadFlaggedIps();
+  loadIPv6Records();
+  loadDeviceRecords();
+  connectAnalyticsSSE(id);
+}
+
+// ── Config ────────────────────────────────────────────────────────────────────
+async function loadConfig() {
+  const r = await api(`/admin/apps/${currentAppId}/config`);
+  if (r.status === 401) { doLogout(); return; }
+  configData = await r.json();
+}
+
+// ── App Admins ────────────────────────────────────────────────────────────────
+async function loadAdmins() {
+  const r = await api(`/admin/apps/${currentAppId}/admins`);
+  if (r.ok) appAdmins = await r.json();
+}
+
+// ── Messages ──────────────────────────────────────────────────────────────────
+async function loadMessages() {
+  const r = await api(`/admin/apps/${currentAppId}/messages`);
+  if (r.ok) messagesData = await r.json();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderAppContent() {
+  const a = apps.find(x => x.id === currentAppId);
+  if (!a) return;
+  const configUrl = `${window.location.origin}/api/dialog/config/${a.api_key}`;
+  const panelUrl  = `${window.location.origin}/panel/${a.api_key}/`;
+  const master  = configData.find(c => c.key === 'dialog_enabled');
+  const offline = configData.find(c => c.key === 'hide_when_offline');
+  const fields  = configData.filter(c => FIELD_KEYS.includes(c.key));
+
+  document.getElementById('app-content').innerHTML = `
+    <div style="margin-bottom:18px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div>
+        <h2 style="font-size:17px;font-weight:700;color:#f8fafc">${esc(a.name)}</h2>
+        <p style="font-size:11px;color:#64748b;margin-top:2px">App ID: ${a.id}</p>
+      </div>
+    </div>
+
+    <!-- Analytics -->
+    <div class="section" id="analytics-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+        <div class="section-title">📊 Real-time Analytics</div>
+        <button class="btn btn-ghost btn-xs" onclick="clearAnalytics()" style="font-size:10px">🗑️ Clear</button>
+      </div>
+      <div class="section-sub">কোন device কখন config fetch করলো — live</div>
+      <div class="stat-cards">
+        <div class="stat-card"><div class="stat-value" id="stat-total">—</div><div class="stat-label">মোট Hit</div></div>
+        <div class="stat-card"><div class="stat-value" id="stat-today">—</div><div class="stat-label">আজকের Hit (২৪ ঘণ্টা)</div></div>
+        <div class="stat-card live-card"><div class="stat-value"><span class="live-dot"></span><span id="stat-live">Live</span></div><div class="stat-label">Real-time Connected</div></div>
+      </div>
+      <div class="chart-wrap">
+        <div style="font-size:11px;color:#475569;margin-bottom:6px">গত ২৪ ঘণ্টার Hit (per hour)</div>
+        <div id="analytics-chart" class="chart-empty">লোড হচ্ছে...</div>
+      </div>
+      <div style="font-size:11px;color:#475569;margin-bottom:8px;margin-top:4px">সাম্প্রতিক Hits (সর্বশেষ ৫০টি) — IP-তে ক্লিক করে Flag করুন</div>
+      <div class="hit-feed" id="hit-feed"><div class="no-hits">লোড হচ্ছে...</div></div>
+
+      <div class="flagged-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:12px;color:#f87171;font-weight:600">🚨 Flagged IPs <span id="flagged-count" style="font-size:10px;color:#475569;font-weight:400"></span></div>
+          <button class="btn btn-ghost btn-xs" onclick="openManualFlag()" style="font-size:10px;border-color:#7f1d1d;color:#f87171">+ Manual Flag</button>
+        </div>
+        <div id="flagged-list"><div class="no-flagged">কোনো flagged IP নেই</div></div>
+        <div id="manual-flag-form" style="display:none;margin-top:10px;background:#0f172a;border-radius:8px;padding:12px">
+          <div style="font-size:11px;color:#94a3b8;font-weight:600;margin-bottom:8px">IP Manually Flag করুন</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <input type="text" id="manual-flag-ip" placeholder="IP Address (যেমন: 103.x.x.x)" style="flex:1;min-width:120px;padding:7px 10px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#f1f5f9;font-size:12px;font-family:monospace;outline:none">
+            <input type="text" id="manual-flag-reason" placeholder="কারণ (যেমন: Fraud account)" style="flex:2;min-width:140px;padding:7px 10px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#f1f5f9;font-size:12px;outline:none">
+            <button class="btn btn-danger btn-xs" onclick="submitManualFlag()">🚩 Flag</button>
+            <button class="btn btn-ghost btn-xs" onclick="closeManualFlag()">✕</button>
+          </div>
+          <div id="manual-flag-msg" style="display:none;margin-top:6px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dialog Status -->
+    <div class="section">
+      <div class="section-title">Dialog Status</div>
+      <div class="section-sub">সম্পূর্ণ dialog চালু বা বন্ধ করুন</div>
+      ${master ? `
+      <div class="master-item config-item">
+        <div><div class="config-label">${esc(master.label)}</div><div class="config-key">${master.key}</div></div>
+        <label class="toggle"><input type="checkbox" id="toggle_dialog_enabled" ${master.enabled?'checked':''} onchange="toggleMaster(this)"><span class="slider"></span></label>
+      </div>` : ''}
+      ${offline ? `
+      <div class="offline-item config-item">
+        <div>
+          <div class="config-label">🔴 ${esc(offline.label)}</div>
+          <div class="config-key">${offline.key}</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="toggle_hide_when_offline" ${offline.enabled?'checked':''}><span class="slider"></span></label>
+      </div>` : ''}
+      <div class="save-bar" style="margin-top:12px">
+        <button class="btn btn-primary btn-sm" onclick="saveConfig()">💾 Save</button>
+        <span class="saving-indicator" id="saving-txt">Saving...</span>
+      </div>
+      <div id="save-msg" style="display:none"></div>
+    </div>
+
+    <!-- Fields -->
+    <div class="section">
+      <div class="section-title">Dialog Fields</div>
+      <div class="section-sub">কোন তথ্য দেখাবে সেটা নিয়ন্ত্রণ করুন</div>
+      ${fields.map(c => `
+      <div class="config-item">
+        <div><div class="config-label">${esc(c.label)}</div><div class="config-key">${c.key}</div></div>
+        <label class="toggle"><input type="checkbox" id="toggle_${c.key}" ${c.enabled?'checked':''}><span class="slider"></span></label>
+      </div>`).join('')}
+      <div class="save-bar">
+        <button class="btn btn-primary" onclick="saveConfig()">💾 Save Changes</button>
+      </div>
+    </div>
+
+    <!-- Dialog Messages -->
+    <div class="section">
+      <div class="section-title">💬 Dialog Messages</div>
+      <div class="section-sub">Dialog-এর নিচে custom বার্তা দেখান — যেমন: "Withdraw করবেন না"</div>
+      <div id="messages-list">${renderMessagesList()}</div>
+      <div class="add-msg-form">
+        <div style="font-size:12px;color:#94a3b8;font-weight:600">নতুন Message যোগ করুন</div>
+        <div class="row">
+          <input type="text" id="new-msg-text" placeholder="যেমন: Withdraw করবেন না">
+          <button class="btn btn-primary btn-sm" onclick="addMessage()">Add</button>
+        </div>
+        <div id="add-msg-msg" style="display:none;margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- App Admins -->
+    <div class="section">
+      <div class="section-title">👥 App Admins</div>
+      <div class="section-sub">এই অ্যাপের আলাদা admin তৈরি করুন — তারা শুধু এই অ্যাপ manage করতে পারবে</div>
+      <div id="admins-list">${renderAdminsList()}</div>
+      <div class="add-admin-form">
+        <div style="font-size:12px;color:#94a3b8;font-weight:600">নতুন Admin যোগ করুন</div>
+        <div class="row">
+          <input type="text" id="new-admin-user" placeholder="Username">
+          <input type="password" id="new-admin-pass" placeholder="Password (min 4)">
+          <button class="btn btn-primary btn-sm" onclick="addAdmin()">Add</button>
+        </div>
+        <div id="add-admin-msg" style="display:none;margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- Panel URL -->
+    <div class="section">
+      <div class="section-title">🖥️ App Admin Panel URL</div>
+      <div class="section-sub">এই URL টা app-এর admins কে দিন — তারা শুধু এই অ্যাপ দেখতে পাবে</div>
+      <div class="api-url-box" id="panel-url-box">${panelUrl}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="copyText('${panelUrl}', this)">📋 Copy Panel URL</button>
+    </div>
+
+    <!-- Android Config URL -->
+    <div class="section">
+      <div class="section-title">📡 Android Config URL</div>
+      <div class="section-sub">এই URL টা smali কোডের CONFIG_URL field-এ দিন</div>
+      <div class="api-url-box">${configUrl}</div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="copyText('${configUrl}', this)">📋 Copy Config URL</button>
+    </div>
+
+    <!-- IPv6 Records -->
+    <div class="section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+        <div class="section-title">🌐 IPv6 Records</div>
+        <button class="btn btn-ghost btn-xs" onclick="clearAllIPv6()" style="font-size:10px;border-color:#7f1d1d;color:#f87171">🗑️ সব Clear</button>
+      </div>
+      <div class="section-sub">একই IPv6 দিয়ে যতবার connect হয়েছে — duplicate detection এখানে track হয়</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#0f172a;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+        <div>
+          <div style="font-size:13px;color:#cbd5e1;font-weight:500">নতুন IPv6 Record করো</div>
+          <div style="font-size:11px;color:#475569;margin-top:2px">Off করলে নতুন device আর record হবে না, পুরনো duplicate check কাজ করবে</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="ipv6-tracking-toggle" checked onchange="toggleTracking('ipv6_tracking_enabled', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div id="ipv6-records-list"><div style="text-align:center;padding:16px;color:#475569;font-size:13px">লোড হচ্ছে...</div></div>
+    </div>
+
+    <!-- Device ID Records -->
+    <div class="section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+        <div class="section-title">📱 Device ID Records</div>
+        <button class="btn btn-ghost btn-xs" onclick="clearAllDevices()" style="font-size:10px;border-color:#7f1d1d;color:#f87171">🗑️ সব Clear</button>
+      </div>
+      <div class="section-sub">একই Device ID দিয়ে যতবার connect হয়েছে — duplicate detection এখানে track হয়</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#0f172a;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+        <div>
+          <div style="font-size:13px;color:#cbd5e1;font-weight:500">নতুন Device ID Record করো</div>
+          <div style="font-size:11px;color:#475569;margin-top:2px">Off করলে নতুন device আর record হবে না, পুরনো duplicate check কাজ করবে</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="device-tracking-toggle" checked onchange="toggleTracking('device_tracking_enabled', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div id="device-records-list"><div style="text-align:center;padding:16px;color:#475569;font-size:13px">লোড হচ্ছে...</div></div>
+    </div>
+
+    <!-- Super Admin Password -->
+    <div class="section">
+      <div class="section-title">🔑 Super Admin Password</div>
+      <div class="section-sub">আপনার নিজের password পরিবর্তন করুন</div>
+      <div class="pw-form">
+        <div class="form-group"><label>Current Password</label><input type="password" id="cur-pass" placeholder="Current password"></div>
+        <div class="form-group"><label>New Password</label><input type="password" id="new-pass" placeholder="Min 6 chars"></div>
+        <div class="form-group"><label>Confirm</label><input type="password" id="confirm-pass" placeholder="Repeat new password"></div>
+        <button class="btn btn-danger btn-sm" onclick="changePassword()">Change Password</button>
+        <div id="pw-msg" style="display:none"></div>
+      </div>
+    </div>
+  `;
+}
+
+// ── Messages ──────────────────────────────────────────────────────────────────
+function renderMessagesList() {
+  if (!messagesData.length) return '<div class="no-messages">এখনো কোনো message নেই</div>';
+  return messagesData.map(m => `
+    <div class="msg-row" id="msg-row-${m.id}">
+      <span class="msg-text" id="msg-text-${m.id}">${esc(m.message)}</span>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-ghost btn-xs" onclick="startEditMsg(${m.id})">✏️</button>
+        <button class="btn btn-danger btn-xs" onclick="deleteMessage(${m.id})">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+async function addMessage() {
+  const input = document.getElementById('new-msg-text');
+  const msgEl = document.getElementById('add-msg-msg');
+  const message = input.value.trim();
+  msgEl.style.display = 'none';
+  if (!message) { msgEl.className='error-msg'; msgEl.textContent='Message লিখুন।'; msgEl.style.display='block'; return; }
+  const r = await api(`/admin/apps/${currentAppId}/messages`, 'POST', { message });
+  const data = await r.json();
+  if (!r.ok) { msgEl.className='error-msg'; msgEl.textContent=data.error; msgEl.style.display='block'; return; }
+  messagesData.push(data);
+  input.value = '';
+  document.getElementById('messages-list').innerHTML = renderMessagesList();
+  msgEl.className='success-msg'; msgEl.textContent='✓ Message যোগ হয়েছে!'; msgEl.style.display='block';
+  setTimeout(() => msgEl.style.display='none', 3000);
+}
+
+function startEditMsg(id) {
+  const m = messagesData.find(x => x.id === id);
+  if (!m) return;
+  const row = document.getElementById('msg-row-' + id);
+  row.innerHTML = `
+    <input class="msg-edit-input" id="edit-msg-input-${id}" value="${esc(m.message)}" onkeydown="if(event.key==='Enter')saveEditMsg(${id});if(event.key==='Escape')cancelEditMsg(${id})">
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn btn-primary btn-xs" onclick="saveEditMsg(${id})">✓</button>
+      <button class="btn btn-ghost btn-xs" onclick="cancelEditMsg(${id})">✕</button>
+    </div>`;
+  document.getElementById('edit-msg-input-' + id).focus();
+}
+
+async function saveEditMsg(id) {
+  const input = document.getElementById('edit-msg-input-' + id);
+  const message = input.value.trim();
+  if (!message) return;
+  const r = await api(`/admin/apps/${currentAppId}/messages/${id}`, 'PUT', { message });
+  const data = await r.json();
+  if (r.ok) {
+    const idx = messagesData.findIndex(x => x.id === id);
+    if (idx !== -1) messagesData[idx] = data;
+    document.getElementById('messages-list').innerHTML = renderMessagesList();
+  }
+}
+
+function cancelEditMsg(id) {
+  document.getElementById('messages-list').innerHTML = renderMessagesList();
+}
+
+async function deleteMessage(id) {
+  if (!confirm('এই message মুছে ফেলবেন?')) return;
+  const r = await api(`/admin/apps/${currentAppId}/messages/${id}`, 'DELETE');
+  if (r.ok) {
+    messagesData = messagesData.filter(m => m.id !== id);
+    document.getElementById('messages-list').innerHTML = renderMessagesList();
+  }
+}
+
+// ── Admins ────────────────────────────────────────────────────────────────────
+function renderAdminsList() {
+  if (!appAdmins.length) return '<div class="no-admins">এখনো কোনো admin নেই</div>';
+  return appAdmins.map(a => `
+    <div class="admin-row">
+      <div>
+        <div class="admin-name">👤 ${esc(a.username)}</div>
+        <div class="admin-date">${new Date(a.created_at).toLocaleDateString('bn-BD')}</div>
+      </div>
+      <div class="admin-actions">
+        <button class="btn btn-ghost btn-xs" onclick="openPwModal(${currentAppId},${a.id},'${esc(a.username).replace(/'/g,"\\'")}')">🔑 Reset PW</button>
+        <button class="btn btn-danger btn-xs" onclick="removeAdmin(${a.id},'${esc(a.username).replace(/'/g,"\\'")}')">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+async function addAdmin() {
+  const username = document.getElementById('new-admin-user').value.trim();
+  const password = document.getElementById('new-admin-pass').value;
+  const msgEl = document.getElementById('add-admin-msg');
+  msgEl.style.display = 'none';
+  if (!username || !password) { msgEl.className='error-msg'; msgEl.textContent='Username ও Password দিন।'; msgEl.style.display='block'; return; }
+  const r = await api(`/admin/apps/${currentAppId}/admins`, 'POST', { username, password });
+  const data = await r.json();
+  if (!r.ok) { msgEl.className='error-msg'; msgEl.textContent=data.error; msgEl.style.display='block'; return; }
+  appAdmins.push(data);
+  document.getElementById('new-admin-user').value = '';
+  document.getElementById('new-admin-pass').value = '';
+  document.getElementById('admins-list').innerHTML = renderAdminsList();
+  msgEl.className='success-msg'; msgEl.textContent=`✓ "${username}" admin হিসেবে যোগ হয়েছে!`; msgEl.style.display='block';
+  setTimeout(() => msgEl.style.display='none', 3000);
+}
+
+async function removeAdmin(adminId, username) {
+  if (!confirm(`"${username}" কে admin থেকে সরাবেন?`)) return;
+  const r = await api(`/admin/apps/${currentAppId}/admins/${adminId}`, 'DELETE');
+  if (r.ok) { appAdmins = appAdmins.filter(a => a.id !== adminId); document.getElementById('admins-list').innerHTML = renderAdminsList(); }
+}
+
+function openPwModal(appId, adminId, username) {
+  pwModalTarget = { appId, adminId };
+  document.getElementById('pw-modal-title').textContent = `Reset: ${username}`;
+  document.getElementById('pw-modal-input').value = '';
+  document.getElementById('pw-modal-err').style.display = 'none';
+  document.getElementById('pw-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('pw-modal-input').focus(), 50);
+}
+function closePwModal() { document.getElementById('pw-modal').style.display = 'none'; }
+
+async function doResetPassword() {
+  const password = document.getElementById('pw-modal-input').value;
+  const errEl = document.getElementById('pw-modal-err');
+  const btn = document.getElementById('pw-modal-btn');
+  errEl.style.display = 'none';
+  if (!password || password.length < 4) { errEl.className='error-msg'; errEl.textContent='কমপক্ষে ৪ অক্ষর দিন।'; errEl.style.display='block'; return; }
+  btn.disabled = true;
+  const r = await api(`/admin/apps/${pwModalTarget.appId}/admins/${pwModalTarget.adminId}/password`, 'PUT', { password });
+  const data = await r.json();
+  btn.disabled = false;
+  if (!r.ok) { errEl.className='error-msg'; errEl.textContent=data.error; errEl.style.display='block'; return; }
+  closePwModal();
+}
+
+// ── Config actions ────────────────────────────────────────────────────────────
+function toggleMaster(el) {
+  const on = el.checked;
+  FIELD_KEYS.forEach(k => { const t = document.getElementById('toggle_'+k); if (t) t.checked = on; });
+  saveConfig();
+}
+
+async function saveConfig() {
+  const savingTxt = document.getElementById('saving-txt');
+  const saveMsg = document.getElementById('save-msg');
+  if (!savingTxt) return;
+  savingTxt.style.display = 'inline'; saveMsg.style.display = 'none';
+  const updates = configData.map(c => ({ key: c.key, enabled: document.getElementById('toggle_'+c.key)?.checked ?? c.enabled }));
+  try {
+    const r = await api(`/admin/apps/${currentAppId}/config`, 'PUT', updates);
+    if (r.status === 401) { doLogout(); return; }
+    configData = await r.json();
+    saveMsg.className = 'success-msg'; saveMsg.textContent = '✓ Saved!';
+  } catch { saveMsg.className = 'error-msg'; saveMsg.textContent = 'Save failed.'; }
+  savingTxt.style.display = 'none'; saveMsg.style.display = 'block';
+  setTimeout(() => saveMsg.style.display = 'none', 3000);
+}
+
+async function changePassword() {
+  const cur = document.getElementById('cur-pass').value;
+  const nw  = document.getElementById('new-pass').value;
+  const conf = document.getElementById('confirm-pass').value;
+  const msgEl = document.getElementById('pw-msg');
+  msgEl.style.display = 'none';
+  if (!cur||!nw||!conf) { msgEl.className='error-msg'; msgEl.textContent='সব field পূরণ করুন।'; msgEl.style.display='block'; return; }
+  if (nw !== conf) { msgEl.className='error-msg'; msgEl.textContent='Password মিলছে না।'; msgEl.style.display='block'; return; }
+  if (nw.length < 6) { msgEl.className='error-msg'; msgEl.textContent='কমপক্ষে ৬ অক্ষর।'; msgEl.style.display='block'; return; }
+  try {
+    const r = await api('/admin/password', 'PUT', { currentPassword: cur, newPassword: nw });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+    msgEl.className='success-msg'; msgEl.textContent='✓ Password পরিবর্তন হয়েছে!';
+    ['cur-pass','new-pass','confirm-pass'].forEach(id => document.getElementById(id).value='');
+  } catch (e) { msgEl.className='error-msg'; msgEl.textContent=e.message; }
+  msgEl.style.display='block'; setTimeout(() => msgEl.style.display='none', 5000);
+}
+
+// ── App modal ─────────────────────────────────────────────────────────────────
+function openAddApp() {
+  modalMode='add'; renameTargetId=null;
+  document.getElementById('modal-title').textContent='New App';
+  document.getElementById('modal-app-name').value='';
+  document.getElementById('modal-err').style.display='none';
+  document.getElementById('modal-save-btn').textContent='Create';
+  document.getElementById('app-modal').style.display='flex';
+  setTimeout(() => document.getElementById('modal-app-name').focus(), 50);
+}
+function openRename(id, name) {
+  modalMode='rename'; renameTargetId=id;
+  document.getElementById('modal-title').textContent='Rename App';
+  document.getElementById('modal-app-name').value=name;
+  document.getElementById('modal-err').style.display='none';
+  document.getElementById('modal-save-btn').textContent='Save';
+  document.getElementById('app-modal').style.display='flex';
+  setTimeout(() => document.getElementById('modal-app-name').focus(), 50);
+}
+function closeModal() { document.getElementById('app-modal').style.display='none'; }
+document.getElementById('modal-app-name').addEventListener('keydown', e => { if (e.key==='Enter') saveApp(); if (e.key==='Escape') closeModal(); });
+
+async function saveApp() {
+  const name = document.getElementById('modal-app-name').value.trim();
+  const errEl = document.getElementById('modal-err');
+  errEl.style.display='none';
+  if (!name) { errEl.className='error-msg'; errEl.textContent='নাম দিন।'; errEl.style.display='block'; return; }
+  const btn = document.getElementById('modal-save-btn'); btn.disabled=true;
+  try {
+    const r = modalMode==='add'
+      ? await api('/admin/apps','POST',{name})
+      : await api(`/admin/apps/${renameTargetId}`,'PUT',{name});
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+    closeModal();
+    await loadApps();
+    if (modalMode==='add') selectApp(data.id);
+  } catch(e) { errEl.className='error-msg'; errEl.textContent=e.message; errEl.style.display='block'; }
+  btn.disabled=false;
+}
+
+async function deleteApp(id, name) {
+  if (!confirm(`"${name}" অ্যাপটি ডিলিট করবেন? সব config ও admin মুছে যাবে।`)) return;
+  const r = await api(`/admin/apps/${id}`,'DELETE');
+  const data = await r.json();
+  if (!r.ok) { alert(data.error); return; }
+  if (currentAppId===id) { currentAppId=null; document.getElementById('app-content').innerHTML='<div class="empty-state"><div style="font-size:38px">📱</div><p>বাম দিক থেকে একটি App সিলেক্ট করুন</p></div>'; }
+  await loadApps();
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  try {
+    const r = await api(`/admin/apps/${currentAppId}/analytics`);
+    if (!r.ok) return;
+    analyticsData = await r.json();
+    updateAnalyticsUI();
+  } catch {}
+}
+
+function updateAnalyticsUI() {
+  const totalEl = document.getElementById('stat-total');
+  const todayEl = document.getElementById('stat-today');
+  if (totalEl) totalEl.textContent = analyticsData.total.toLocaleString();
+  if (todayEl) todayEl.textContent = analyticsData.today.toLocaleString();
+  renderAnalyticsChart(analyticsData.hourly);
+  renderHitFeed(analyticsData.recent, false);
+}
+
+function renderAnalyticsChart(hourly) {
+  const el = document.getElementById('analytics-chart');
+  if (!el) return;
+  if (!hourly || !hourly.length) {
+    el.className = 'chart-empty'; el.textContent = 'এখনো কোনো hit নেই'; return;
+  }
+  el.className = 'chart-bars';
+  const max = Math.max(...hourly.map(h => parseInt(h.count)), 1);
+  el.innerHTML = hourly.map(h => {
+    const count = parseInt(h.count);
+    const pct = Math.max((count / max) * 54, 2);
+    const label = new Date(h.hour).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+    return `<div class="chart-bar-col" title="${label}: ${count} hits">
+      <div class="chart-bar" style="height:${pct}px"></div>
+      <div class="chart-bar-label">${label.slice(0,5)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderHitFeed(hits, prepend) {
+  const el = document.getElementById('hit-feed');
+  if (!el) return;
+  if (!hits || !hits.length) {
+    el.innerHTML = '<div class="no-hits">এখনো কোনো hit নেই — Android device config fetch করলে এখানে দেখাবে</div>';
+    return;
+  }
+  if (!prepend) {
+    el.innerHTML = hits.map(h => hitRowHTML(h, false)).join('');
+  } else {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = hitRowHTML(hits[0], true);
+    el.insertBefore(wrap.firstElementChild, el.firstChild);
+    const rows = el.querySelectorAll('.hit-row');
+    if (rows.length > 50) rows[rows.length - 1].remove();
+  }
+}
+
+function isFlaggedIp(ip) {
+  return flaggedIps.some(f => f.ip === ip);
+}
+
+function hitRowHTML(h, isNew) {
+  const time = new Date(h.hit_at);
+  const timeStr = time.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  const dateStr = time.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+  const ua = h.user_agent || 'Unknown';
+  const shortUA = ua.length > 45 ? ua.slice(0, 45) + '…' : ua;
+  const flagged = h.flagged || isFlaggedIp(h.ip);
+  const ipEscaped = esc(h.ip || '?');
+  const ipForJs = (h.ip || '').replace(/'/g, "\\'");
+  const flagBtn = flagged
+    ? `<button class="btn-unflag" onclick="unflagIp('${ipForJs}')">✓ Unflag</button>`
+    : `<button class="btn-flag" onclick="flagIp('${ipForJs}')">🚩 Flag</button>`;
+  const flagBadge = flagged ? `<span class="flag-badge">FLAGGED</span>` : '';
+  return `<div class="hit-row${isNew ? ' new-hit' : ''}${flagged ? ' is-flagged' : ''}">
+    <span class="hit-ip${flagged ? ' flagged-ip' : ''}">${ipEscaped}${flagBadge}</span>
+    <span class="hit-ua" title="${esc(ua)}">${esc(shortUA)}</span>
+    <span class="hit-time">${dateStr} ${timeStr}</span>
+    ${flagBtn}
+  </div>`;
+}
+
+function connectAnalyticsSSE(appId) {
+  if (analyticsSSE) { try { analyticsSSE.close(); } catch {} analyticsSSE = null; }
+  if (!TOKEN) return;
+  const es = new EventSource(`${BASE}/admin/apps/${appId}/analytics/stream?token=${encodeURIComponent(TOKEN)}`);
+  analyticsSSE = es;
+  es.onmessage = (e) => {
+    if (currentAppId !== appId) { es.close(); return; }
+    try {
+      const hit = JSON.parse(e.data);
+      analyticsData.total++;
+      analyticsData.today++;
+      const statTotal = document.getElementById('stat-total');
+      const statToday = document.getElementById('stat-today');
+      if (statTotal) statTotal.textContent = analyticsData.total.toLocaleString();
+      if (statToday) statToday.textContent = analyticsData.today.toLocaleString();
+      renderHitFeed([hit], true);
+      const nowHour = new Date(); nowHour.setMinutes(0, 0, 0);
+      const existing = analyticsData.hourly.find(h => new Date(h.hour).getTime() === nowHour.getTime());
+      if (existing) existing.count = parseInt(existing.count) + 1;
+      else analyticsData.hourly.push({ hour: nowHour.toISOString(), count: 1 });
+      renderAnalyticsChart(analyticsData.hourly);
+    } catch {}
+  };
+  es.onerror = () => { try { es.close(); } catch {} };
+}
+
+async function clearAnalytics() {
+  if (!confirm('এই App-এর সব analytics data মুছে ফেলবেন?')) return;
+  const r = await api(`/admin/apps/${currentAppId}/analytics`, 'DELETE');
+  if (r.ok) {
+    analyticsData = { total: 0, today: 0, hourly: [], recent: [] };
+    updateAnalyticsUI();
+  }
+}
+
+// ── Flagged IPs ────────────────────────────────────────────────────────────────
+async function loadFlaggedIps() {
+  try {
+    const r = await api(`/admin/apps/${currentAppId}/flagged-ips`);
+    if (!r.ok) return;
+    flaggedIps = await r.json();
+    renderFlaggedIps();
+    renderHitFeed(analyticsData.recent, false);
+  } catch {}
+}
+
+function renderFlaggedIps() {
+  const listEl = document.getElementById('flagged-list');
+  const countEl = document.getElementById('flagged-count');
+  if (!listEl) return;
+  if (countEl) countEl.textContent = flaggedIps.length ? `(${flaggedIps.length}টি)` : '';
+  if (!flaggedIps.length) {
+    listEl.innerHTML = '<div class="no-flagged">কোনো flagged IP নেই — Analytics feed থেকে 🚩 Flag করুন</div>';
+    return;
+  }
+  listEl.innerHTML = flaggedIps.map(f => {
+    const t = new Date(f.flagged_at);
+    const tStr = t.toLocaleDateString('en', { month: 'short', day: 'numeric' }) + ' ' + t.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const ipForJs = f.ip.replace(/'/g, "\\'");
+    return `<div class="flagged-row">
+      <span class="flagged-row-ip">🚨 ${esc(f.ip)}</span>
+      <span class="flagged-row-reason" title="${esc(f.reason)}">${esc(f.reason) || '<em style="color:#475569">কোনো কারণ নেই</em>'}</span>
+      <span class="flagged-row-time">${tStr}</span>
+      <button class="btn-unflag" onclick="unflagIp('${ipForJs}')">✓ Unflag</button>
+    </div>`;
+  }).join('');
+}
+
+async function flagIp(ip) {
+  const reason = prompt(`"${ip}" কে flag করুন\n\nকারণ লিখুন (optional):`, 'প্রতারণামূলক অ্যাকাউন্ট') ?? null;
+  if (reason === null) return;
+  const r = await api(`/admin/apps/${currentAppId}/flagged-ips`, 'POST', { ip, reason });
+  if (r.ok) {
+    const data = await r.json();
+    const exists = flaggedIps.findIndex(f => f.ip === ip);
+    if (exists !== -1) flaggedIps[exists] = data; else flaggedIps.unshift(data);
+    renderFlaggedIps();
+    renderHitFeed(analyticsData.recent, false);
+  }
+}
+
+async function unflagIp(ip) {
+  if (!confirm(`"${ip}" কে unflag করবেন?`)) return;
+  const r = await api(`/admin/apps/${currentAppId}/flagged-ips/${encodeURIComponent(ip)}`, 'DELETE');
+  if (r.ok) {
+    flaggedIps = flaggedIps.filter(f => f.ip !== ip);
+    renderFlaggedIps();
+    renderHitFeed(analyticsData.recent, false);
+  }
+}
+
+function openManualFlag() {
+  const form = document.getElementById('manual-flag-form');
+  if (form) { form.style.display = 'block'; document.getElementById('manual-flag-ip').focus(); }
+}
+function closeManualFlag() {
+  const form = document.getElementById('manual-flag-form');
+  if (form) { form.style.display = 'none'; }
+  const msgEl = document.getElementById('manual-flag-msg');
+  if (msgEl) msgEl.style.display = 'none';
+}
+async function submitManualFlag() {
+  const ip = document.getElementById('manual-flag-ip').value.trim();
+  const reason = document.getElementById('manual-flag-reason').value.trim();
+  const msgEl = document.getElementById('manual-flag-msg');
+  msgEl.style.display = 'none';
+  if (!ip) { msgEl.className='error-msg'; msgEl.textContent='IP address দিন।'; msgEl.style.display='block'; return; }
+  const r = await api(`/admin/apps/${currentAppId}/flagged-ips`, 'POST', { ip, reason });
+  const data = await r.json();
+  if (!r.ok) { msgEl.className='error-msg'; msgEl.textContent=data.error; msgEl.style.display='block'; return; }
+  const exists = flaggedIps.findIndex(f => f.ip === ip);
+  if (exists !== -1) flaggedIps[exists] = data; else flaggedIps.unshift(data);
+  renderFlaggedIps();
+  renderHitFeed(analyticsData.recent, false);
+  document.getElementById('manual-flag-ip').value = '';
+  document.getElementById('manual-flag-reason').value = '';
+  msgEl.className='success-msg'; msgEl.textContent=`✓ "${ip}" flag করা হয়েছে!`; msgEl.style.display='block';
+  setTimeout(() => { msgEl.style.display='none'; }, 3000);
+}
+
+// ── Tracking Toggles ───────────────────────────────────────────────────────────
+async function toggleTracking(key, enabled) {
+  const r = await api(`/admin/apps/${currentAppId}/config/${key}`, 'PUT', { enabled });
+  if (!r.ok) {
+    const el = document.getElementById(key === 'ipv6_tracking_enabled' ? 'ipv6-tracking-toggle' : 'device-tracking-toggle');
+    if (el) el.checked = !enabled;
+    return;
+  }
+  const entry = configData.find(c => c.key === key);
+  if (entry) entry.enabled = enabled;
+}
+
+function applyTrackingToggles() {
+  const ipv6Entry = configData.find(c => c.key === 'ipv6_tracking_enabled');
+  const devEntry  = configData.find(c => c.key === 'device_tracking_enabled');
+  const ipv6El = document.getElementById('ipv6-tracking-toggle');
+  const devEl  = document.getElementById('device-tracking-toggle');
+  if (ipv6El && ipv6Entry) ipv6El.checked = ipv6Entry.enabled;
+  if (devEl  && devEntry)  devEl.checked  = devEntry.enabled;
+}
+
+// ── IPv6 Records ───────────────────────────────────────────────────────────────
+let ipv6RecordsData = [], deviceRecordsData = [];
+
+async function loadIPv6Records() {
+  try {
+    const r = await api(`/admin/apps/${currentAppId}/ipv6-records`);
+    if (!r.ok) return;
+    ipv6RecordsData = await r.json();
+    renderIPv6Records();
+  } catch {}
+}
+
+function renderIPv6Records() {
+  const el = document.getElementById('ipv6-records-list');
+  if (!el) return;
+  if (!ipv6RecordsData.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:#475569;font-size:13px">কোনো IPv6 record নেই</div>';
+    return;
+  }
+  el.innerHTML = ipv6RecordsData.map(r => {
+    const last = new Date(r.last_seen).toLocaleString('en', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #0f172a">
+      <span style="font-family:monospace;font-size:11px;color:#38bdf8;flex:1;word-break:break-all">${esc(r.ipv6)}</span>
+      <span style="font-size:11px;color:#f59e0b;white-space:nowrap;flex-shrink:0">×${r.hit_count}</span>
+      <span style="font-size:10px;color:#475569;white-space:nowrap;flex-shrink:0">${last}</span>
+      <button class="btn-unflag" onclick="deleteIPv6Record(${r.id})" style="flex-shrink:0">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+async function deleteIPv6Record(id) {
+  const r = await api(`/admin/apps/${currentAppId}/ipv6-records/${id}`, 'DELETE');
+  if (r.ok) { ipv6RecordsData = ipv6RecordsData.filter(x => x.id !== id); renderIPv6Records(); }
+}
+
+async function clearAllIPv6() {
+  if (!confirm('এই App-এর সব IPv6 records মুছে ফেলবেন?\nDuplicate detection নতুনভাবে শুরু হবে।')) return;
+  await Promise.all(ipv6RecordsData.map(r => api(`/admin/apps/${currentAppId}/ipv6-records/${r.id}`, 'DELETE')));
+  ipv6RecordsData = [];
+  renderIPv6Records();
+}
+
+// ── Device ID Records ──────────────────────────────────────────────────────────
+async function loadDeviceRecords() {
+  try {
+    const r = await api(`/admin/apps/${currentAppId}/device-records`);
+    if (!r.ok) return;
+    deviceRecordsData = await r.json();
+    renderDeviceRecords();
+  } catch {}
+}
+
+function renderDeviceRecords() {
+  const el = document.getElementById('device-records-list');
+  if (!el) return;
+  if (!deviceRecordsData.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:#475569;font-size:13px">কোনো Device ID record নেই</div>';
+    return;
+  }
+  el.innerHTML = deviceRecordsData.map(r => {
+    const last = new Date(r.last_seen).toLocaleString('en', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #0f172a">
+      <span style="font-family:monospace;font-size:11px;color:#a78bfa;flex:1;word-break:break-all">${esc(r.device_id)}</span>
+      <span style="font-size:11px;color:#f59e0b;white-space:nowrap;flex-shrink:0">×${r.hit_count}</span>
+      <span style="font-size:10px;color:#475569;white-space:nowrap;flex-shrink:0">${last}</span>
+      <button class="btn-unflag" onclick="deleteDeviceRecord(${r.id})" style="flex-shrink:0">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+async function deleteDeviceRecord(id) {
+  const r = await api(`/admin/apps/${currentAppId}/device-records/${id}`, 'DELETE');
+  if (r.ok) { deviceRecordsData = deviceRecordsData.filter(x => x.id !== id); renderDeviceRecords(); }
+}
+
+async function clearAllDevices() {
+  if (!confirm('এই App-এর সব Device ID records মুছে ফেলবেন?\nDuplicate detection নতুনভাবে শুরু হবে।')) return;
+  await Promise.all(deviceRecordsData.map(r => api(`/admin/apps/${currentAppId}/device-records/${r.id}`, 'DELETE')));
+  deviceRecordsData = [];
+  renderDeviceRecords();
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent; btn.textContent='✓ Copied!';
+    setTimeout(() => btn.textContent=orig, 2000);
+  });
+}
+function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+if (TOKEN) { const u = localStorage.getItem('admin_user')||'admin'; showDashboard(u); }
+</script>
+</body>
+</html>
