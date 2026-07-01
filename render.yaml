@@ -1,11 +1,10 @@
 services:
   - type: web
-    name: dialog-admin-backend
+    name: dialog-admin-panel
     runtime: node
     plan: free
     buildCommand: npm install
     startCommand: node server.js
-    healthCheckPath: /api/healthz
     envVars:
       - key: NODE_ENV
         value: production
